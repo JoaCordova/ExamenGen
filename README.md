@@ -1,67 +1,28 @@
 # Generador de Exámenes Personalizados
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![pandas](https://img.shields.io/badge/pandas-Data%20Analysis-%23150458?logo=pandas)
+![PyPDF2](https://img.shields.io/badge/PyPDF2-PDF%20handling-blueviolet)
+![fpdf](https://img.shields.io/badge/fpdf-PDF%20Generator-brightgreen)
 
-Este script en Python genera exámenes PDF para un número determinado de estudiantes, usando un banco de preguntas categorizado. También adjunta un archivo de respuestas (`answers.pdf`) a cada examen y exporta un archivo `respuestas.csv` con las claves correctas para cada alumno.
+![2025-05-13 18-55-08 (1)](https://github.com/user-attachments/assets/028b92ad-1bdf-47c5-b3d8-63b2dedb9d87)
 
+Este script en Python genera exámenes en formato PDF para un grupo de 30 estudiantes, seleccionando aleatoriamente 30 preguntas a partir de un banco de 45 preguntas organizadas en tres categorías (15 por categoría). El objetivo es que cada prueba sea única para cada alumno. Además de los exámenes, el script adjunta un archivo de respuestas (answers.pdf) para cada uno y exporta un archivo CSV (respuestas.csv) con las claves correctas correspondientes a cada estudiante.
 
-# Entradas principales
+## 📦 Instalación
++ Antes de empezar, carga las preguntas, sus opciones, respuestas correctas y el tipo (categoría/tema) en `preguntas.csv`.   
++ Posteriormente, instala las librerías necesarias. Puedes hacerlo con `pip`:
 
--   **Archivo `preguntas.csv`**: Contiene las preguntas, sus opciones, respuestas correctas y el tipo (categoría/tema).
-    
--   **Archivo `answers.pdf`**: Documento general con respuestas que se adjunta a cada examen individual.
-    
--   **Inputs del usuario**:
-    
-    -   Título del examen (`titulo_examen`)
-        
-    -   Fecha del examen (`fecha_examen`)
+```bash
+pip install fpdf PyPDF2 pandas
+```
++ Ejecuta el código.
+## 🤖 Funcionamiento
 
-## Funcionamiento
-
--   **Carga del Banco de Preguntas**:
-    
-    -   Se lee `preguntas.csv` usando `pandas`.
-        
-    -   Se detectan automáticamente todos los temas únicos (como `"historia de la imprenta"`, `"puntuación"`, etc.).
-        
-    -   Se agrupan las preguntas por tema en un diccionario `banco`.
-        
--   **Generación de Exámenes**:
-    
-    -   Se genera un número determinado de exámenes (por defecto, 30).
-        
-    -   Para cada alumno, se seleccionan aleatoriamente `n` preguntas por tema.
-        
-    -   Se garantiza que ninguna hoja tenga preguntas repetidas y que cada examen tenga una combinación única de preguntas (al menos 5 diferentes entre ellos).
-        
-    -   El código del alumno se usa como identificador único (ej. `001`, `002`, ...).
-        
--   **Creación del PDF del Examen**:
-    
-    -   Se usa `fpdf` para crear el examen con el título, fecha y bloques por tema.
-        
-    -   Se inserta un pie de página (footer) en cada hoja con el código del alumno.
-        
--   **Unión con `answers.pdf`**:
-    
-    -   El PDF de respuestas se copia y se le añade el mismo pie de página personalizado.
-        
-    -   Se combinan ambos archivos (`examen + respuestas`) con `PyPDF2`.
-        
+Se generan 30 exámenes. Para cada alumno, se seleccionan aleatoriamente `n` preguntas por tema. Ninguna hoja tiene preguntas repetidas y cada examen tiene una combinación única de preguntas (al menos 5 diferentes entre ellos). El código del alumno se usa como identificador único (ej. 001, 002).
+              
 -   **Exportación de Archivos**:
     
     -   Cada examen se guarda como `examen_XXX.pdf` en la carpeta `examenes/`.
         
     -   Se crea el archivo `respuestas.csv` con todas las respuestas correctas por alumno.
-
-## 📁 Estructura de Archivos del Proyecto
-```
-📦 generador_examenes/
-├── generador.py # Script principal
-├── preguntas.csv # Banco de preguntas (entrada)
-├── answers.pdf # Archivo de respuestas adjunto a cada examen
-├── respuestas.csv # Claves de respuestas correctas por alumno (salida)
-├── examenes/ # Carpeta de salida con los exámenes generados
-│ ├── examen_001.pdf
-│ ├── examen_002.pdf
-│ └── ...
-```
