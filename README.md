@@ -1,28 +1,30 @@
-# Generador de Exámenes Personalizados
+# Custom Exam Generator
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![pandas](https://img.shields.io/badge/pandas-Data%20Analysis-%23150458?logo=pandas)
 ![PyPDF2](https://img.shields.io/badge/PyPDF2-PDF%20handling-blueviolet)
 ![fpdf](https://img.shields.io/badge/fpdf-PDF%20Generator-brightgreen)
 
-![2025-05-13 18-55-08 (1)](https://github.com/user-attachments/assets/028b92ad-1bdf-47c5-b3d8-63b2dedb9d87)
+This Python script generates **30 unique, category-balanced exams** in PDF format from a bank of 45 questions (3 categories). Each student receives a different set of 30 questions with no duplicates.
 
-Este script en Python genera exámenes en formato PDF para un grupo de 30 estudiantes, seleccionando aleatoriamente 30 preguntas a partir de un banco de 45 preguntas organizadas en tres categorías (15 por categoría). El objetivo es que cada prueba sea única para cada alumno. Además de los exámenes, el script adjunta un archivo de respuestas (answers.pdf) para cada uno y exporta un archivo CSV (respuestas.csv) con las claves correctas correspondientes a cada estudiante.
-
-## 📦 Instalación
-+ Antes de empezar, carga las preguntas, sus opciones, respuestas correctas y el tipo (categoría/tema) en `preguntas.csv`.   
-+ Posteriormente, instala las librerías necesarias. Puedes hacerlo con `pip`:
-
+For each student, the script also generates:
+- A **PDF exam**
+- A **PDF answer sheet**
+- A **CSV file linking student IDs to correct answers**
+## 📦 Installation
+1. Prepare `preguntas.csv` with questions, options, correct answers, and categories  
+2. Install dependencies:
 ```bash
 pip install fpdf PyPDF2 pandas
-```
-+ Ejecuta el código.
-## 🤖 Funcionamiento
+ ```
+## 🤖 Functionality
+- Generates **30 exams**, one per student  
+- Randomly selects questions per category  
+- Ensures **no repeated questions within an exam**  
+- Guarantees **unique exams** (at least 5 differences between students)  
+- Uses **student IDs** as identifiers (e.g., 001, 002)  
 
-Se generan 30 exámenes. Para cada alumno, se seleccionan aleatoriamente `n` preguntas por tema. Ninguna hoja tiene preguntas repetidas y cada examen tiene una combinación única de preguntas (al menos 5 diferentes entre ellos). El código del alumno se usa como identificador único (ej. 001, 002).
-              
--   **Exportación de Archivos**:
-    
-    -   Cada examen se guarda como `examen_XXX.pdf` en la carpeta `examenes/`.
-        
-    -   Se crea el archivo `respuestas.csv` con todas las respuestas correctas por alumno.
+## 📁 Output
+- `examenes/examen_XXX.pdf` → individual exams  
+- `answers_XXX.pdf` → answer sheet per student  
+- `respuestas.csv` → answer key mapped to each student  
