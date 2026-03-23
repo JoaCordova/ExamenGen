@@ -32,7 +32,7 @@ def load_questions(df, topic):
     question_list = []
     for _, row in df[df["Type"] == topic].iterrows():
         question_list.append({
-            "text": row["Pregunta"],
+            "text": row["Question"],
             "options": [
                 row["Option A"],
                 row["Option B"],
