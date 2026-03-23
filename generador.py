@@ -5,150 +5,162 @@ from fpdf import FPDF
 from PyPDF2 import PdfReader, PdfWriter
 import pandas as pd
 
-#  Inputs 
-titulo_examen = input("Introduce el título del examen: ")
-curso = input("Introduce el curso: ")
-fecha_examen  = input("Introduce la fecha (ej. 18/junio/2000): ")
+# Inputs
+exam_title = input("Enter the exam title: ")
+course_name = input("Enter the course name: ")
+exam_date = input("Enter the exam date (e.g. 18/June/2000): ")
 
-#  PDF footer 
-class PDF(FPDF):
-    def __init__(self, codigo_alumno):
+# PDF class
+class ExamPDF(FPDF):
+    def __init__(self, student_code):
         super().__init__()
-        self.codigo = codigo_alumno
+        self.student_code = student_code
 
     def footer(self):
         self.set_y(-15)
         self.set_font("Arial", "I", 10)
-        self.cell(0, 10, f"Código: {self.codigo}", align="C")
+        self.cell(0, 10, f"Code: {self.student_code}", align="C")
 
-#  Cargar CSV y detectar temas 
-df = pd.read_csv("preguntas.csv")
-df["Tipo"] = df["Tipo"].str.strip().str.lower()
+# Load CSV
+dataframe = pd.read_csv("questions.csv")
+dataframe["Type"] = dataframe["Type"].str.strip().str.lower()
 
-temas = df["Tipo"].unique()  # Lista de tipos únicos (bloques)
+topics = dataframe["Type"].unique()
 
-# Cargar preguntas por tema
-def cargar_preguntas(df, tipo):
-    preguntas = []
-    for _, row in df[df["Tipo"] == tipo].iterrows():
-        preguntas.append({
-            "texto": row["Pregunta"],
-            "opciones": [
-                row["Opción A"],
-                row["Opción B"],
-                row["Opción C"],
-                row["Opción D"],
-                row["Opción E"],
+# Load questions by topic
+def load_questions(df, topic):
+    question_list = []
+    for _, row in df[df["Type"] == topic].iterrows():
+        question_list.append({
+            "text": row["Pregunta"],
+            "options": [
+                row["Option A"],
+                row["Option B"],
+                row["Option C"],
+                row["Option D"],
+                row["Option E"],
             ],
-            "respuesta": row["Respuesta Correcta"].strip().upper()
+            "answer": row["Correct answer"].strip().upper()
         })
-    return preguntas
+    return question_list
 
-#  Generar banco por tema 
-banco = {tema: cargar_preguntas(df, tema) for tema in temas}
+# Question bank
+question_bank = {topic: load_questions(dataframe, topic) for topic in topics}
 
-# Parámetros
-alumnos = 30
-por_tema = 10
+# Parameters
+num_students = 30
+questions_per_topic = 10
 
-#  Crear combinaciones únicas por alumno 
-usadas = set()
-pruebas = []
+# Generate unique exams
+used_combinations = set()
+exam_versions = []
 
-for n in range(1, alumnos + 1):
-    codigo = f"{n:03d}"
+for i in range(1, num_students + 1):
+    student_code = f"{i:03d}"
     while True:
-        seleccion = {tema: random.sample(banco[tema], por_tema) for tema in temas}
-        combo = tuple(sorted(q["texto"] for lista in seleccion.values() for q in lista))
-        if combo not in usadas:
-            usadas.add(combo)
+        selected_questions = {
+            topic: random.sample(question_bank[topic], questions_per_topic)
+            for topic in topics
+        }
+        combo_key = tuple(sorted(q["text"] for group in selected_questions.values() for q in group))
+        
+        if combo_key not in used_combinations:
+            used_combinations.add(combo_key)
             break
-    pruebas.append({
-        "codigo": codigo,
-        "bloques": seleccion  # dict con claves = tema
+
+    exam_versions.append({
+        "code": student_code,
+        "sections": selected_questions
     })
 
-#  Generar examen en PDF 
-def generar_examen(prueba):
-    pdf = PDF(prueba["codigo"])
+# Generate exam PDF
+def generate_exam_pdf(exam):
+    pdf = ExamPDF(exam["code"])
     pdf.add_page()
+    
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 15, titulo_examen, ln=1, align="C")
+    pdf.cell(0, 15, exam_title, ln=1, align="C")
+    
     pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 8, f"Nombre: __________  Curso: {curso}  Fecha: {fecha_examen}", ln=1)
+    pdf.cell(0, 8, f"Name: __________  Course: {course_name}  Date: {exam_date}", ln=1)
 
-    for tema, preguntas in prueba["bloques"].items():
+    for topic, questions in exam["sections"].items():
         pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 8, tema.upper(), ln=1)
+        pdf.cell(0, 8, topic.upper(), ln=1)
+        
         pdf.set_font("Arial", '', 11)
-        for i, pregunta in enumerate(preguntas, 1):
-            pdf.multi_cell(0, 6, f"{i}. {pregunta['texto']}")
-            for op in pregunta["opciones"]:
-                pdf.cell(0, 6, f"   {op}", ln=1)
+        for index, question in enumerate(questions, 1):
+            pdf.multi_cell(0, 6, f"{index}. {question['text']}")
+            for option in question["options"]:
+                pdf.cell(0, 6, f"   {option}", ln=1)
             pdf.ln(2)
+
     return pdf
 
-#  Footer para answers.pdf 
-def create_footer_pdf(codigo_alumno):
+# Footer creation
+def create_footer_page(student_code):
     footer_pdf = FPDF()
     footer_pdf.add_page()
     footer_pdf.set_font("Arial", "I", 10)
     footer_pdf.set_y(-15)
-    footer_pdf.cell(0, 10, f"Código: {codigo_alumno}", align="C")
+    footer_pdf.cell(0, 10, f"Code: {student_code}", align="C")
     
-    footer_path = "footer_temp.pdf"
-    footer_pdf.output(footer_path)
+    temp_path = "footer_temp.pdf"
+    footer_pdf.output(temp_path)
     
-    footer_reader = PdfReader(footer_path)
-    footer_page = footer_reader.pages[0]
+    reader = PdfReader(temp_path)
+    footer_page = reader.pages[0]
     
-    os.remove(footer_path)
+    os.remove(temp_path)
     return footer_page
 
-def add_footer_to_answers_pdf(answers_path, codigo_alumno, output_path):
-    reader = PdfReader(answers_path)
+def add_footer_to_answers(input_path, student_code, output_path):
+    reader = PdfReader(input_path)
     writer = PdfWriter()
-    footer = create_footer_pdf(codigo_alumno)
+    footer_page = create_footer_page(student_code)
 
     for page in reader.pages:
-        page.merge_page(footer)
+        page.merge_page(footer_page)
         writer.add_page(page)
 
-    with open(output_path, "wb") as f:
-        writer.write(f)
+    with open(output_path, "wb") as file:
+        writer.write(file)
 
-#  Generar PDFs combinados 
-os.makedirs("examenes", exist_ok=True)
+# Generate PDFs
+os.makedirs("exams", exist_ok=True)
 
-for pr in pruebas:
-    codigo = pr["codigo"]
-    pdf = generar_examen(pr)
-    examen_temp = f"examenes/temp_{codigo}.pdf"
-    pdf.output(examen_temp)
+for exam in exam_versions:
+    code = exam["code"]
+    
+    pdf = generate_exam_pdf(exam)
+    temp_exam_path = f"exams/temp_{code}.pdf"
+    pdf.output(temp_exam_path)
 
-    answers_with_footer = f"examenes/answers_{codigo}.pdf"
-    add_footer_to_answers_pdf("answers.pdf", codigo, answers_with_footer)
+    answers_with_footer_path = f"exams/answers_{code}.pdf"
+    add_footer_to_answers("answers.pdf", code, answers_with_footer_path)
 
-    merger = PdfWriter()
-    merger.append(PdfReader(examen_temp))
-    merger.append(PdfReader(answers_with_footer))
+    writer = PdfWriter()
+    writer.append(PdfReader(temp_exam_path))
+    writer.append(PdfReader(answers_with_footer_path))
 
-    with open(f"examenes/examen_{codigo}.pdf", "wb") as f:
-        merger.write(f)
+    final_path = f"exams/exam_{code}.pdf"
+    with open(final_path, "wb") as file:
+        writer.write(file)
 
-    os.remove(examen_temp)
-    os.remove(answers_with_footer)
+    os.remove(temp_exam_path)
+    os.remove(answers_with_footer_path)
 
-#  Generar archivo CSV de respuestas 
-with open("respuestas.csv", "w", newline="") as f:
-    wr = csv.writer(f)
-    headers = ["Código"] + [f"P{i+1}" for i in range(por_tema * len(temas))]
-    wr.writerow(headers)
+# Generate answers CSV
+with open("answers_output.csv", "w", newline="") as file:
+    writer = csv.writer(file)
+    
+    headers = ["Code"] + [f"Q{i+1}" for i in range(questions_per_topic * len(topics))]
+    writer.writerow(headers)
 
-    for pr in pruebas:
-        fila = [pr["codigo"]]
-        for tema in temas:
-            fila += [q["respuesta"] for q in pr["bloques"][tema]]
-        wr.writerow(fila)
+    for exam in exam_versions:
+        row = [exam["code"]]
+        for topic in topics:
+            row += [q["answer"] for q in exam["sections"][topic]]
+        writer.writerow(row)
 
-print("✔️ Exámenes generados con títulos desde el CSV y respuestas exportadas.")
+print("✔️ Exams generated and answers exported.")
